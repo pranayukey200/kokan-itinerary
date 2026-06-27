@@ -484,22 +484,24 @@ function openLightbox(src){lbImg.src=src;lbEl.classList.add('open');}
 var lmap, markerGroup, currentRoute=null;
 
 function initMap(){
-  lmap=L.map('map',{scrollWheelZoom:false,zoomControl:true,attributionControl:false}).setView([15.97,73.62],10);
+  /* Create map WITHOUT setView so we can fix size before tiles are requested */
+  lmap=L.map('map',{scrollWheelZoom:false,zoomControl:true,attributionControl:false});
 
-  /* OSM tiles with CSS dark-invert — no CDN key needed, always works */
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     subdomains:'abc',maxZoom:19,className:'map-tiles'
   }).addTo(lmap);
 
   markerGroup=L.layerGroup().addTo(lmap);
 
-  /* Force correct size — immediate + deferred */
+  /* Fix container size BEFORE setView so tiles are requested at correct positions */
   lmap.invalidateSize();
-  setTimeout(function(){lmap.invalidateSize();},200);
-  setTimeout(function(){lmap.invalidateSize();},800);
+  lmap.setView([15.97,73.62],10);
 
   buildDayUI();
   renderDay(DAYS[0]);
+
+  /* Extra deferred fix for any late reflow */
+  setTimeout(function(){lmap.invalidateSize();},400);
 }
 
 /* Build day tab buttons + progress segments */
