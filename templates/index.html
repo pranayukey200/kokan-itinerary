@@ -266,9 +266,9 @@ footer{padding:60px 0 80px;text-align:center;border-top:1px solid var(--b);}
 <section class="block map-module">
   <div class="wrap">
     <div class="bhead rev"><p class="eyebrow">Live Route</p><h2 class="btitle">Pick A Day, Watch The Ride</h2><p class="bdesc">Select a day — map draws the actual road route. Tap any stop pin to see photos of that location.</p></div>
-    <div class="daytabs rev" id="dayTabs"></div>
-    <div class="dprog rev" id="dayProg"></div>
-    <div class="maplayout rev">
+    <div class="daytabs" id="dayTabs"></div>
+    <div class="dprog" id="dayProg"></div>
+    <div class="maplayout">
       <div id="map"></div>
       <div class="mapinfo" id="mapInfo"><p style="font-family:var(--fm);font-size:10px;color:var(--tdimmer);margin:auto;text-align:center;letter-spacing:.15em;">LOADING MAP...</p></div>
     </div>
@@ -493,14 +493,10 @@ function initMap(){
 
   markerGroup=L.layerGroup().addTo(lmap);
 
-  /* Fix size after render — multiple passes for CDN latency */
-  setTimeout(function(){lmap.invalidateSize();},100);
-  setTimeout(function(){lmap.invalidateSize();},500);
-  setTimeout(function(){lmap.invalidateSize();},1200);
-  if('IntersectionObserver' in window){
-    var mo=new IntersectionObserver(function(entries){entries.forEach(function(en){if(en.isIntersecting){lmap.invalidateSize();mo.disconnect();}});},{threshold:.1});
-    mo.observe(document.getElementById('map'));
-  }
+  /* Force correct size — immediate + deferred */
+  lmap.invalidateSize();
+  setTimeout(function(){lmap.invalidateSize();},200);
+  setTimeout(function(){lmap.invalidateSize();},800);
 
   buildDayUI();
   renderDay(DAYS[0]);
@@ -672,9 +668,21 @@ async function fetchWikiPhotos(stopName){
   }
 }
 
-/* Boot the map after everything loads */
-if(document.readyState==='complete'){initMap();}
-else{window.addEventListener('load',initMap);}
+/* Boot the map lazily — wait until #map is visible so Leaflet measures correct size */
+var mapBooted=false;
+function bootMap(){
+  if(mapBooted) return;
+  mapBooted=true;
+  initMap();
+}
+if('IntersectionObserver' in window){
+  var mapIO=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){if(en.isIntersecting){bootMap();mapIO.disconnect();}});
+  },{threshold:0.05});
+  mapIO.observe(document.getElementById('map'));
+} else {
+  window.addEventListener('load',bootMap);
+}
 </script>
 </body>
 </html>
