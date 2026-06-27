@@ -98,8 +98,8 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:var(--fb);line-
 .dpseg.on{background:var(--green);}
 
 .maplayout{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start;}
-#map{height:520px;border-radius:12px;border:1px solid var(--bs);background:var(--bg);overflow:hidden;position:relative;z-index:1;}
-.map-tiles{filter:invert(100%) hue-rotate(180deg) brightness(0.82) saturate(0.75) contrast(1.05);}
+#map{height:520px;border-radius:12px;border:1px solid var(--bs);background:var(--bg);position:relative;z-index:1;clip-path:inset(0 round 12px);}
+#map .leaflet-tile-pane{filter:invert(100%) hue-rotate(180deg) brightness(0.82) saturate(0.75) contrast(1.05);}
 
 /* Leaflet overrides */
 .leaflet-popup-content-wrapper{background:var(--surf2)!important;color:var(--text)!important;border:1px solid var(--bs)!important;border-radius:10px!important;box-shadow:0 4px 28px rgba(0,0,0,.7)!important;}
@@ -484,24 +484,23 @@ function openLightbox(src){lbImg.src=src;lbEl.classList.add('open');}
 var lmap, markerGroup, currentRoute=null;
 
 function initMap(){
-  /* Create map WITHOUT setView so we can fix size before tiles are requested */
   lmap=L.map('map',{scrollWheelZoom:false,zoomControl:true,attributionControl:false});
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    subdomains:'abc',maxZoom:19,className:'map-tiles'
+    subdomains:'abc',maxZoom:19
   }).addTo(lmap);
 
   markerGroup=L.layerGroup().addTo(lmap);
-
-  /* Fix container size BEFORE setView so tiles are requested at correct positions */
-  lmap.invalidateSize();
   lmap.setView([15.97,73.62],10);
 
   buildDayUI();
   renderDay(DAYS[0]);
 
-  /* Extra deferred fix for any late reflow */
-  setTimeout(function(){lmap.invalidateSize();},400);
+  /* After next paint: fix size + reset all tile positions */
+  requestAnimationFrame(function(){
+    lmap.invalidateSize({animate:false,pan:false});
+    lmap.setView([15.97,73.62],10,{animate:false,reset:true});
+  });
 }
 
 /* Build day tab buttons + progress segments */
@@ -675,7 +674,8 @@ var mapBooted=false;
 function bootMap(){
   if(mapBooted) return;
   mapBooted=true;
-  initMap();
+  /* 500ms delay: lets CSS grid finish computing column widths before Leaflet measures */
+  setTimeout(initMap,500);
 }
 if('IntersectionObserver' in window){
   var mapIO=new IntersectionObserver(function(entries){
