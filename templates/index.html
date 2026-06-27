@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Travel Itinerary by Pranay — Konkan Monsoon Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oxanium:wght@400;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.css">
+<style>
+:root{
+  --bg:#050e0d;--bg2:#08181a;--surf:#0c2226;--surf2:#102c30;
+  --b:rgba(0,230,140,.08);--bs:rgba(0,230,140,.16);
+  --green:#00e88a;--gg:rgba(0,232,138,.3);
+  --orange:#ff6b35;--og:rgba(255,107,53,.3);
+  --teal:#00ccee;--tg:rgba(0,200,238,.3);
+  --red:#ff3d2e;--gold:#f5c542;
+  --text:#ddeedd;--tdim:#607870;--tdimmer:#344845;
+  --fd:'Bebas Neue',sans-serif;--fh:'Oxanium',sans-serif;
+  --fb:'Space Grotesk',sans-serif;--fm:'Space Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--fb);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--green);border-radius:2px;}
+::selection{background:var(--green);color:var(--bg);}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px;}
+
+#pgbar{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--green),var(--teal));z-index:9999;pointer-events:none;}
+
+/* TOPBAR */
+.topbar{position:fixed;top:2px;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 22px;font-family:var(--fm);font-size:10px;letter-spacing:.12em;color:var(--tdim);background:linear-gradient(to bottom,rgba(5,14,13,.96),rgba(5,14,13,0));pointer-events:none;}
+.topbar b{color:var(--text);}
+.dot{color:var(--green);animation:blink 2s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* HERO */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;padding:100px 20px 60px;}
+#hc{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
+.hvig{position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 140% 55% at 50% 100%,rgba(5,14,13,1) 0%,transparent 65%),radial-gradient(ellipse 90% 90% at 50% 50%,transparent 20%,rgba(5,14,13,.65) 100%);}
+.hcon{position:relative;z-index:2;max-width:980px;}
+.hey{font-family:var(--fm);font-size:10px;letter-spacing:.3em;color:var(--green);text-transform:uppercase;margin-bottom:14px;opacity:0;animation:su .8s cubic-bezier(.16,1,.3,1) forwards .2s;}
+.htitle{font-family:var(--fd);font-size:clamp(58px,13vw,152px);line-height:.88;margin:0 0 10px;color:var(--text);opacity:0;animation:su 1s cubic-bezier(.16,1,.3,1) forwards .35s;}
+.htitle .acc{color:var(--orange);text-shadow:0 0 80px var(--og);}
+.htitle .by{display:block;font-size:clamp(28px,6vw,68px);letter-spacing:.18em;color:var(--green);text-shadow:0 0 50px var(--gg);}
+.htitle:hover .acc{animation:glitch .35s steps(2,end) infinite;}
+@keyframes glitch{0%{text-shadow:3px 0 var(--teal),-3px 0 var(--orange),0 0 60px var(--og);}33%{text-shadow:-3px 0 var(--teal),3px 0 var(--orange);}66%{text-shadow:0 3px var(--teal),0 -3px var(--orange);}100%{text-shadow:3px 0 var(--teal),-3px 0 var(--orange),0 0 60px var(--og);}}
+.hsub{font-family:var(--fm);font-size:clamp(9px,1.3vw,12px);letter-spacing:.2em;color:var(--tdim);text-transform:uppercase;margin:0 0 44px;opacity:0;animation:su .9s cubic-bezier(.16,1,.3,1) forwards .5s;}
+.hstats{display:flex;flex-wrap:wrap;justify-content:center;border-top:1px solid var(--bs);border-bottom:1px solid var(--bs);opacity:0;animation:su 1s cubic-bezier(.16,1,.3,1) forwards .65s;}
+.hstat{padding:14px 22px;border-right:1px solid var(--bs);text-align:left;min-width:130px;}
+.hstat:last-child{border-right:none;}
+.hstat .sl{display:block;font-family:var(--fm);font-size:9px;letter-spacing:.16em;color:var(--tdimmer);text-transform:uppercase;margin-bottom:4px;}
+.hstat .sv{display:block;font-family:var(--fm);font-size:12px;font-weight:700;color:var(--text);}
+.scue{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:var(--fm);font-size:9px;letter-spacing:.25em;color:var(--tdimmer);opacity:0;animation:su 1s ease forwards 1.1s;}
+.scue::after{content:'';display:block;width:1px;height:38px;background:linear-gradient(to bottom,var(--green),transparent);animation:ldrop 2.2s ease-in-out infinite;}
+@keyframes ldrop{0%{transform:scaleY(0);transform-origin:top;opacity:1;}50%{transform:scaleY(1);transform-origin:top;}51%{transform:scaleY(1);transform-origin:bottom;}100%{transform:scaleY(0);transform-origin:bottom;opacity:0;}}
+@keyframes su{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+
+/* SECTIONS */
+.block{padding:72px 0;}
+.bhead{margin-bottom:44px;}
+.eyebrow{font-family:var(--fm);font-size:10px;letter-spacing:.28em;text-transform:uppercase;margin:0 0 10px;display:flex;align-items:center;gap:10px;}
+.eyebrow::before{content:'';display:block;width:18px;height:1px;background:currentColor;}
+.btitle{font-family:var(--fh);font-weight:800;font-size:clamp(26px,3.8vw,44px);line-height:1.06;margin:0 0 10px;text-transform:uppercase;}
+.bdesc{font-size:14.5px;color:var(--tdim);margin:0;max-width:520px;line-height:1.7;}
+.rev{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1);}
+.rev.in{opacity:1;transform:none;}
+
+/* ADVISORY */
+.advisory{background:var(--bg2);border-top:1px solid var(--b);border-bottom:1px solid var(--b);}
+.advisory .eyebrow{color:var(--orange);}
+.adgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bs);border:1px solid var(--bs);border-radius:12px;overflow:hidden;}
+.acard{background:var(--bg2);padding:20px 18px;transition:background .2s;}
+.acard:hover{background:var(--surf);}
+.ahead{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.led{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.led.go{background:var(--green);box-shadow:0 0 8px var(--green);animation:lp 2s ease-in-out infinite;}
+.led.warn{background:var(--gold);box-shadow:0 0 8px var(--gold);animation:lp 1.5s ease-in-out infinite;}
+.led.stop{background:var(--red);box-shadow:0 0 8px var(--red);animation:lp 1s ease-in-out infinite;}
+@keyframes lp{0%,100%{opacity:1}50%{opacity:.35}}
+.alabel{font-family:var(--fm);font-size:9px;letter-spacing:.16em;color:var(--tdim);text-transform:uppercase;}
+.astatus{font-family:var(--fh);font-weight:700;font-size:14px;margin:0 0 5px;}
+.anote{font-size:12.5px;color:var(--tdim);margin:0;line-height:1.6;}
+
+/* MAP MODULE */
+.map-module .eyebrow{color:var(--green);}
+.daytabs{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;}
+.daytabs::-webkit-scrollbar{display:none;}
+.dtab{font-family:var(--fm);font-size:10px;letter-spacing:.08em;background:var(--surf);border:1px solid var(--bs);color:var(--tdim);padding:10px 15px;border-radius:8px;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0;touch-action:manipulation;}
+.tdot{width:6px;height:6px;border-radius:50%;background:var(--tdimmer);transition:all .25s;}
+.dtab:hover{color:var(--text);}
+.dtab.active{color:var(--text);background:var(--surf2);border-color:var(--tc,var(--green));box-shadow:0 0 14px -4px var(--tc,var(--green));}
+.dtab.active .tdot{background:var(--tc,var(--green));box-shadow:0 0 8px var(--tc,var(--green));}
+
+.dprog{display:flex;align-items:center;gap:4px;margin-bottom:14px;}
+.dpseg{height:3px;flex:1;background:var(--bs);border-radius:2px;transition:background .4s,box-shadow .4s;}
+.dpseg.on{background:var(--green);}
+
+.maplayout{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start;}
+#map{height:520px;border-radius:12px;border:1px solid var(--bs);background:var(--bg);overflow:hidden;z-index:0;}
+
+/* Leaflet overrides */
+.leaflet-popup-content-wrapper{background:var(--surf2)!important;color:var(--text)!important;border:1px solid var(--bs)!important;border-radius:10px!important;box-shadow:0 4px 28px rgba(0,0,0,.7)!important;}
+.leaflet-popup-tip-container{display:none;}
+.leaflet-popup-content{font-family:var(--fb)!important;font-size:12.5px!important;margin:12px 14px!important;line-height:1.6!important;}
+.leaflet-popup-content .pc{font-family:var(--fm);font-size:9px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:4px;}
+.leaflet-control-zoom a{background:var(--surf)!important;color:var(--text)!important;border-color:var(--bs)!important;line-height:28px!important;}
+.leaflet-control-zoom a:hover{background:var(--surf2)!important;}
+.leaflet-control-attribution{display:none!important;}
+
+/* Animated marker pin */
+.mpin{width:30px;height:30px;border-radius:50%;background:var(--bg);border:2px solid var(--pc,var(--green));display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:11px;font-weight:700;color:var(--text);box-shadow:0 0 0 0 var(--pg,var(--gg));animation:pp 2.5s ease-out infinite;cursor:pointer;}
+@keyframes pp{0%{box-shadow:0 0 0 0 var(--pg,rgba(0,232,138,.4))}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+
+/* INFO PANEL */
+.mapinfo{background:var(--surf);border:1px solid var(--bs);border-radius:12px;padding:22px;min-height:520px;display:flex;flex-direction:column;}
+.mi-tag{font-family:var(--fm);font-size:9px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:5px;}
+.mi-title{font-family:var(--fh);font-weight:800;font-size:20px;text-transform:uppercase;margin:0 0 8px;line-height:1.1;}
+.mi-narr{font-size:12.5px;color:var(--tdim);margin:0 0 14px;line-height:1.7;}
+
+/* PHOTO STRIP */
+.photo-strip{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:8px;max-height:0;margin-bottom:0;transition:max-height .35s ease,margin-bottom .35s ease;}
+.photo-strip.has-photos{max-height:130px;margin-bottom:14px;}
+.photo-strip::-webkit-scrollbar{display:none;}
+.photo-strip img{height:118px;width:auto;min-width:140px;object-fit:cover;border-radius:8px;border:1px solid var(--bs);flex-shrink:0;cursor:zoom-in;transition:transform .2s,opacity .3s;}
+.photo-strip img:hover{transform:scale(1.04);}
+.photo-strip img.loading{opacity:.4;}
+.photo-loading{display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:9px;letter-spacing:.15em;color:var(--tdimmer);text-transform:uppercase;padding:6px 0;white-space:nowrap;}
+.photo-loading::before{content:'';width:10px;height:10px;border:1.5px solid var(--green);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* STOP LIST */
+.slist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;}
+.sitem{padding:11px 13px;border-radius:8px;background:var(--surf2);border:1px solid var(--b);border-left:3px solid var(--sc,var(--green));cursor:pointer;transition:background .2s;}
+.sitem:hover,.sitem.sel{background:rgba(0,232,138,.06);}
+.srow{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-bottom:3px;}
+.sname{font-weight:600;font-size:12.5px;}
+.stime{font-family:var(--fm);font-size:9px;color:var(--tdimmer);text-transform:uppercase;white-space:nowrap;}
+.snote{font-size:11.5px;color:var(--tdim);margin:0;line-height:1.5;}
+.scoord{font-family:var(--fm);font-size:8.5px;color:var(--tdimmer);margin-top:3px;}
+
+/* TIMELINE */
+.timeline .eyebrow{color:var(--gold);}
+.tlist{display:flex;flex-direction:column;gap:16px;}
+.dcard{background:var(--surf);border:1px solid var(--bs);border-radius:16px;padding:26px 28px;display:grid;grid-template-columns:175px 1fr;gap:26px;will-change:transform;transform-style:preserve-3d;transition:transform .12s ease,box-shadow .28s ease,border-color .28s ease;position:relative;overflow:hidden;}
+.dcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cc,var(--green)) 0%,transparent 70%);opacity:0;transition:opacity .3s;}
+.dcard:hover::before{opacity:1;}
+.dcard:hover{border-color:var(--cc,var(--green));box-shadow:0 24px 60px -20px rgba(0,0,0,.65);}
+.dcnum{font-family:var(--fd);font-size:clamp(60px,7vw,100px);line-height:1;color:var(--cc,var(--green));opacity:.08;position:absolute;right:16px;bottom:-4px;pointer-events:none;}
+.dmeta .dtag{font-family:var(--fm);font-size:9px;letter-spacing:.2em;text-transform:uppercase;margin:0 0 5px;}
+.dmeta .dlabel{font-family:var(--fm);font-size:9px;color:var(--tdimmer);text-transform:uppercase;letter-spacing:.1em;}
+.dmeta h3{font-family:var(--fd);font-size:clamp(28px,3vw,42px);line-height:1.02;margin:8px 0 0;text-transform:uppercase;}
+.dbody .narr{font-size:13.5px;color:var(--tdim);margin:0 0 16px;line-height:1.7;max-width:540px;}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;}
+.sbox{background:var(--surf2);border:1px solid var(--b);border-top:2px solid var(--bc,var(--green));border-radius:8px;padding:12px 13px;}
+.sbtop{display:flex;justify-content:space-between;align-items:baseline;gap:5px;margin-bottom:5px;}
+.sbname{font-weight:600;font-size:12.5px;}
+.sbtime{font-family:var(--fm);font-size:8.5px;color:var(--tdimmer);text-transform:uppercase;white-space:nowrap;}
+.sbnote{font-size:12px;color:var(--tdim);margin:0;line-height:1.5;}
+
+/* LOGISTICS */
+.logistics{background:var(--bg2);border-top:1px solid var(--b);}
+.logistics .eyebrow{color:var(--teal);}
+.lgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.lcard{background:var(--surf);border:1px solid var(--bs);border-radius:12px;padding:22px;transition:border-color .25s,box-shadow .25s;}
+.lcard:hover{border-color:var(--teal);box-shadow:0 0 28px -8px var(--tg);}
+.lhead{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.lnum{font-family:var(--fm);font-size:9px;color:var(--teal);border:1px solid var(--teal);border-radius:4px;padding:3px 7px;}
+.lhead h4{font-family:var(--fh);font-weight:800;font-size:17px;text-transform:uppercase;margin:0;}
+.lcard ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+.lcard li{font-size:13px;color:var(--tdim);padding-left:15px;position:relative;line-height:1.6;}
+.lcard li::before{content:'›';position:absolute;left:0;color:var(--teal);font-family:var(--fm);}
+.lcard li b{color:var(--text);font-weight:600;}
+
+/* FOOTER */
+footer{padding:60px 0 80px;text-align:center;border-top:1px solid var(--b);}
+.ftitle{font-family:var(--fd);font-size:clamp(40px,7vw,88px);margin:0 0 12px;line-height:.92;}
+.ftitle .g{color:var(--green);text-shadow:0 0 60px var(--gg);}
+.fsub{font-family:var(--fm);font-size:10px;color:var(--tdimmer);letter-spacing:.1em;}
+
+/* LIGHTBOX */
+#lightbox{display:none;position:fixed;inset:0;z-index:500;background:rgba(5,14,13,.96);align-items:center;justify-content:center;cursor:zoom-out;}
+#lightbox.open{display:flex;}
+#lightbox img{max-width:90vw;max-height:88vh;object-fit:contain;border-radius:8px;}
+#lightbox .lb-close{position:absolute;top:20px;right:24px;font-family:var(--fm);font-size:18px;color:var(--tdim);cursor:pointer;z-index:1;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .hstats{flex-wrap:wrap;}
+  .hstat{min-width:calc(50% - 1px);border-bottom:1px solid var(--bs);}
+  .hstat:nth-child(odd){border-right:1px solid var(--bs);}
+  .hstat:nth-child(even){border-right:none;}
+  .hstat:nth-last-child(-n+2){border-bottom:none;}
+  .adgrid{grid-template-columns:1fr 1fr;}
+  .maplayout{grid-template-columns:1fr;}
+  #map{height:320px;border-radius:10px;}
+  .mapinfo{min-height:auto;max-height:65vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .dcard{grid-template-columns:1fr;gap:14px;}
+  .sgrid{grid-template-columns:1fr 1fr;}
+  .lgrid{grid-template-columns:1fr;}
+  .block{padding:52px 0;}
+}
+@media(max-width:520px){
+  .adgrid{grid-template-columns:1fr;}
+  .hstat{min-width:100%;border-right:none!important;}
+  .hstat:last-child{border-bottom:none;}
+  .sgrid{grid-template-columns:1fr;}
+  .hero{padding:88px 16px 52px;}
+  .dcard{padding:20px 16px;}
+  .wrap{padding:0 14px;}
+  #map{height:280px;}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}
+  .rev{opacity:1!important;transform:none!important;}
+}
+</style>
+</head>
+<body>
+
+<div id="pgbar"></div>
+<div id="lightbox"><span class="lb-close">&#x2715;</span><img id="lb-img" src="" alt=""></div>
+
+<div class="topbar">
+  <div><b>PRANAY</b> <span class="dot">●</span> KONKAN RUN</div>
+  <div>NGP → SINDHUDURG &nbsp;·&nbsp; DEP 10 JUL &nbsp;·&nbsp; 3N 4D</div>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <canvas id="hc"></canvas>
+  <div class="hvig"></div>
+  <div class="hcon">
+    <p class="hey">Boys' Trip &nbsp;·&nbsp; Mission Brief &nbsp;·&nbsp; July 2025</p>
+    <h1 class="htitle">TRAVEL<br><span class="acc">ITINERARY</span><br><span class="by">by&nbsp;PRANAY</span></h1>
+    <p class="hsub">Konkan Monsoon Run &nbsp;·&nbsp; 3 Nights / 4 Days &nbsp;·&nbsp; Train In, Bike Out</p>
+    <div class="hstats">
+      <div class="hstat"><span class="sl">Route</span><span class="sv">Malvan ⇄ Amboli</span></div>
+      <div class="hstat"><span class="sl">Duration</span><span class="sv">3N / 4D</span></div>
+      <div class="hstat"><span class="sl">Ride Days</span><span class="sv">3 on Bike</span></div>
+      <div class="hstat"><span class="sl">Conditions</span><span class="sv" style="color:var(--orange)">Peak Monsoon</span></div>
+    </div>
+  </div>
+  <div class="scue">scroll</div>
+</section>
+
+<!-- ═══ ADVISORY ═══ -->
+<section class="block advisory">
+  <div class="wrap">
+    <div class="bhead rev"><p class="eyebrow">Monsoon Advisory</p><h2 class="btitle">What 10th July Actually Means On The Ground</h2><p class="bdesc">Right time for waterfalls and empty roads. Not for the postcard beach-and-scuba version of Konkan. Plan around it, not against it.</p></div>
+    <div class="adgrid rev">
+      <div class="acard"><div class="ahead"><span class="led stop"></span><span class="alabel">Watersports</span></div><p class="astatus">Mostly suspended</p><p class="anote">Scuba, jet-ski, banana boat at Tarkarli/Tsunami Island typically pause June–Sept.</p></div>
+      <div class="acard"><div class="ahead"><span class="led go"></span><span class="alabel">Waterfalls</span></div><p class="astatus">Peak flow — best time of year</p><p class="anote">Amboli & Nangartas are at their absolute best right now. Full roar.</p></div>
+      <div class="acard"><div class="ahead"><span class="led warn"></span><span class="alabel">Ghat Roads</span></div><p class="astatus">Ride by daylight only</p><p class="anote">Amboli ghat — one of India's wettest zones. Mist, slippery patches, occasional landslide alerts.</p></div>
+      <div class="acard"><div class="ahead"><span class="led warn"></span><span class="alabel">Fort Ferry</span></div><p class="astatus">Weather-dependent</p><p class="anote">Sindhudurg Fort boat only runs if sea's calm — confirm same-day, not in advance.</p></div>
+      <div class="acard"><div class="ahead"><span class="led go"></span><span class="alabel">Crowds</span></div><p class="astatus">Near zero</p><p class="anote">Cheaper stays, empty roads, no queues. Entire coast is yours.</p></div>
+      <div class="acard"><div class="ahead"><span class="led stop"></span><span class="alabel">Full Beach Maze</span></div><p class="astatus">Better window: Oct–Feb</p><p class="anote">That's when watersports + ferries + dry ghats all line up together.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MAP ═══ -->
+<section class="block map-module">
+  <div class="wrap">
+    <div class="bhead rev"><p class="eyebrow">Live Route</p><h2 class="btitle">Pick A Day, Watch The Ride</h2><p class="bdesc">Select a day — map draws the actual road route. Tap any stop pin to see photos of that location.</p></div>
+    <div class="daytabs rev" id="dayTabs"></div>
+    <div class="dprog rev" id="dayProg"></div>
+    <div class="maplayout rev">
+      <div id="map"></div>
+      <div class="mapinfo" id="mapInfo"><p style="font-family:var(--fm);font-size:10px;color:var(--tdimmer);margin:auto;text-align:center;letter-spacing:.15em;">LOADING MAP...</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TIMELINE ═══ -->
+<section class="block timeline">
+  <div class="wrap">
+    <div class="bhead rev"><p class="eyebrow">Full Manifest</p><h2 class="btitle">Day-By-Day Breakdown</h2><p class="bdesc">Stop by stop. Hover a card — it tilts.</p></div>
+    <div class="tlist" id="cardList"></div>
+  </div>
+</section>
+
+<!-- ═══ LOGISTICS ═══ -->
+<section class="block logistics">
+  <div class="wrap">
+    <div class="bhead rev"><p class="eyebrow">Logistics</p><h2 class="btitle">Train, Bike & Packing</h2></div>
+    <div class="lgrid rev">
+      <div class="lcard"><div class="lhead"><span class="lnum">01</span><h4>Train In</h4></div><ul><li>Direct Nagpur–Konkan trains are <b>rare</b> — ~1,100 km haul.</li><li>Check IRCTC for <b>Nagpur–Madgaon</b> or <b>Nagpur–Sawantwadi Road / Kudal</b> specials first.</li><li>Fallback: Nagpur → Mumbai/Pune (overnight) → <b>Konkan Kanya / Mandovi / LTT–Madgaon</b> → alight at <b>Kudal</b> or <b>Sawantwadi Road</b>.</li><li>Book asap — busy even in monsoon.</li></ul></div>
+      <div class="lcard"><div class="lhead"><span class="lnum">02</span><h4>Bike & Roads</h4></div><ul><li>Base out of <b>Tarkarli/Malvan</b> — ~25–30 km from Kudal, central to everything.</li><li>Rain gear > umbrella on a bike. Quick-dry clothes, dry bag for phones/wallets.</li><li>No night riding on the <b>Amboli ghat</b> — visibility drops fast, roads get slick.</li><li>Build slack into Day 2 & 3 — ferries can cancel same-day if sea's rough.</li></ul></div>
+      <div class="lcard"><div class="lhead"><span class="lnum">03</span><h4>Pack List</h4></div><ul><li><b>Poncho / rain jacket</b> — not just an umbrella.</li><li>Extra socks + slippers for wet feet at stays.</li><li><b>Power bank</b> + waterproof phone pouch.</li><li>Cash — ATMs thin out past the highway.</li><li>First-aid basics + grippy footwear for wet rocks/steps.</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap"><p class="ftitle">RIDE SAFE<br><span class="g">BOYS.</span></p><p class="fsub">// Itinerary by Pranay &nbsp;·&nbsp; Built for the squad &nbsp;·&nbsp; Check live weather before each leg</p></div></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ══════════════════════════════════════
+   TRIP DATA
+══════════════════════════════════════ */
+var DAYS=[
+  {id:1,tag:'DAY 01',label:'Arrival',color:'#00e88a',glow:'rgba(0,232,138,.35)',
+   title:'Touchdown + Malvan Chill',
+   narrative:'Land at Kudal by train, grab the bike, settle into Tarkarli/Malvan, easy evening at the beach.',
+   stops:[
+     {name:'Kudal Railway Station',time:'Morning',lat:16.0171875,lng:73.6779375,note:'Entry point from Nagpur. Pick up rented bike here or get it delivered to your stay.'},
+     {name:'Tarkarli Beach',time:'Afternoon',lat:16.0136864,lng:73.4898334,note:'Check in nearby, drop bags, first beach taste.'},
+     {name:'Chivla Beach',time:'Evening',lat:16.0634178,lng:73.4618231,note:'Sunset + Malvani dinner (kombdi vade, fish thali, solkadi) in Malvan town.'}
+   ]},
+  {id:2,tag:'DAY 02',label:'Fort + Island',color:'#f5c542',glow:'rgba(245,197,66,.35)',
+   title:'Fort + Island Day',
+   narrative:'Sindhudurg Fort, the river-meets-sea sangam point, and Tsunami Island — sea/ferry conditions permitting.',
+   stops:[
+     {name:'Sindhudurg Fort',time:'Morning',lat:16.0433863,lng:73.4609954,note:"Boat from Malvan jetty (~Rs 100–150/head). Confirm locally — ferries cancel in rough monsoon sea."},
+     {name:'Devbag Sangam Point',time:'Afternoon',lat:15.9686814,lng:73.5028518,note:'Karli river meets the Arabian sea — boat ride, dolphin spotting possible.'},
+     {name:'Tsunami Island',time:'Evening',lat:15.9735912,lng:73.5045611,note:'Watersports (jet ski, kayak) — many operators pause in heavy monsoon, ask ahead.'}
+   ]},
+  {id:3,tag:'DAY 03',label:'Amboli Ghat',color:'#ff6b35',glow:'rgba(255,107,53,.35)',
+   title:'Amboli Ghat Waterfall Run',
+   narrative:'The big biking day — ride up into the Sahyadris through Sawantwadi to Amboli, chasing waterfalls all day.',
+   stops:[
+     {name:'Sawantwadi Palace',time:'Morning',lat:15.9067516,lng:73.8248215,note:'Quick stop — lake-facing palace + famous lacquerware/ganjifa art shops in town.'},
+     {name:'Amboli Waterfalls',time:'Midday',lat:15.9491127,lng:73.9988525,note:'In full monsoon glory right now. Go early — mist, slippery ghat road, ride carefully.'},
+     {name:'Nangartas Waterfalls',time:'Afternoon',lat:15.9997238,lng:74.0657137,note:'Narrow falls dropping into a gorge — easy viewpoint, watch for monkeys.'}
+   ]},
+  {id:4,tag:'DAY 04',label:'Coastal + Depart',color:'#00ccee',glow:'rgba(0,200,238,.35)',
+   title:'Coastal Loop + Departure',
+   narrative:'Relaxed coastal ride out to Vengurla before heading back to Kudal to catch your train home.',
+   stops:[
+     {name:'Vengurla',time:'Morning',lat:15.8615356,lng:73.6595075,note:'Quiet beach town, lighthouse, sea garden — good last morning ride.'},
+     {name:'Kudal Railway Station',time:'Afternoon',lat:16.0171875,lng:73.6779375,note:'Return the bike, catch your train back to Nagpur. Mission complete.'}
+   ]}
+];
+
+function esc(s){return String(s).replace(/[&<>'"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
+
+/* ══════════════════════════════════════
+   PROGRESS BAR + SCROLL REVEAL
+══════════════════════════════════════ */
+var pgbar=document.getElementById('pgbar');
+window.addEventListener('scroll',function(){
+  var st=window.scrollY||document.documentElement.scrollTop;
+  var dh=document.documentElement.scrollHeight-window.innerHeight;
+  pgbar.style.width=(dh>0?(st/dh)*100:0)+'%';
+},{passive:true});
+
+var revEls=document.querySelectorAll('.rev');
+if('IntersectionObserver' in window){
+  var revIO=new IntersectionObserver(function(entries){entries.forEach(function(en){if(en.isIntersecting){en.target.classList.add('in');revIO.unobserve(en.target);}});},{threshold:.1});
+  revEls.forEach(function(el){revIO.observe(el);});
+} else { revEls.forEach(function(el){el.classList.add('in');}); }
+
+/* ══════════════════════════════════════
+   THREE.JS HERO
+══════════════════════════════════════ */
+(function(){
+  var canvas=document.getElementById('hc');
+  if(!canvas||!window.THREE) return;
+  var rm=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(rm) return;
+  var W=window.innerWidth,H=window.innerHeight;
+  var renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(W,H);
+  var scene=new THREE.Scene();
+  var camera=new THREE.PerspectiveCamera(58,W/H,.1,120);
+  camera.position.set(0,6.5,11);camera.lookAt(0,0,-3);
+
+  var segs=52;
+  var geo1=new THREE.PlaneGeometry(30,30,segs,segs);geo1.rotateX(-Math.PI/2.25);
+  var m1=new THREE.Mesh(geo1,new THREE.MeshBasicMaterial({color:0x00e88a,wireframe:true,transparent:true,opacity:.16}));
+  m1.position.set(0,-1.6,-5);scene.add(m1);
+  var bp1=geo1.attributes.position.array.slice();
+
+  var geo2=new THREE.PlaneGeometry(30,30,22,22);geo2.rotateX(-Math.PI/2.25);
+  var m2=new THREE.Mesh(geo2,new THREE.MeshBasicMaterial({color:0x00ccee,wireframe:true,transparent:true,opacity:.07}));
+  m2.position.set(0,-1.5,-5);m2.rotation.y=Math.PI/5;scene.add(m2);
+  var bp2=geo2.attributes.position.array.slice();
+
+  var rn=180,rv=new Float32Array(rn*6);
+  for(var i=0;i<rn;i++){var rx=(Math.random()-.5)*26,ry=Math.random()*15-2,rz=(Math.random()-.5)*18,rl=.14+Math.random()*.18;rv[i*6]=rx;rv[i*6+1]=ry;rv[i*6+2]=rz;rv[i*6+3]=rx+.025;rv[i*6+4]=ry-rl;rv[i*6+5]=rz;}
+  var rgeo=new THREE.BufferGeometry();rgeo.setAttribute('position',new THREE.BufferAttribute(rv,3));
+  scene.add(new THREE.LineSegments(rgeo,new THREE.LineBasicMaterial({color:0xddeedd,transparent:true,opacity:.3})));
+
+  var pn=90,ppos=new Float32Array(pn*3),psp=new Float32Array(pn);
+  for(var p=0;p<pn;p++){ppos[p*3]=(Math.random()-.5)*24;ppos[p*3+1]=Math.random()*10-3;ppos[p*3+2]=(Math.random()-.5)*14;psp[p]=.002+Math.random()*.004;}
+  var pgeo=new THREE.BufferGeometry();pgeo.setAttribute('position',new THREE.BufferAttribute(ppos,3));
+  scene.add(new THREE.Points(pgeo,new THREE.PointsMaterial({color:0x00e88a,size:.055,transparent:true,opacity:.45})));
+
+  var shapes=[],sc=[0x00e88a,0xff6b35,0x00ccee,0xf5c542,0x00e88a,0xff6b35];
+  for(var s=0;s<6;s++){var sm=new THREE.Mesh(new THREE.IcosahedronGeometry(.18+Math.random()*.28,0),new THREE.MeshBasicMaterial({color:sc[s],wireframe:true,transparent:true,opacity:.5}));sm.position.set((Math.random()-.5)*14,Math.random()*6-1,(Math.random()-.5)*7-2);sm._rx=(Math.random()-.5)*.022;sm._ry=(Math.random()-.5)*.022;sm._amp=.1+Math.random()*.22;sm._ph=Math.random()*Math.PI*2;sm._by=sm.position.y;scene.add(sm);shapes.push(sm);}
+
+  var scanGeo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-15,0,0),new THREE.Vector3(15,0,0)]);
+  var scanMat=new THREE.LineBasicMaterial({color:0x00e88a,transparent:true,opacity:.5});
+  var scanLine=new THREE.Line(scanGeo,scanMat);scanLine.position.set(0,5,-4);scene.add(scanLine);
+
+  var mouse={x:0,y:0};
+  document.addEventListener('mousemove',function(e){mouse.x=(e.clientX/window.innerWidth-.5)*2;mouse.y=(e.clientY/window.innerHeight-.5)*2;},{passive:true});
+  window.addEventListener('resize',function(){W=window.innerWidth;H=window.innerHeight;renderer.setSize(W,H,false);camera.aspect=W/H;camera.updateProjectionMatrix();});
+
+  var clock=new THREE.Clock();
+  (function frame(){
+    requestAnimationFrame(frame);var t=clock.getElapsedTime();
+    var a1=geo1.attributes.position.array;
+    for(var j=0;j<a1.length;j+=3)a1[j+1]=Math.sin(bp1[j]*.4+t*.7)*.42+Math.cos(bp1[j+2]*.35+t*.52)*.3;
+    geo1.attributes.position.needsUpdate=true;
+    var a2=geo2.attributes.position.array;
+    for(var k=0;k<a2.length;k+=3)a2[k+1]=Math.sin(bp2[k]*.3+t*.5+1)*.52+Math.cos(bp2[k+2]*.4+t*.4)*.28;
+    geo2.attributes.position.needsUpdate=true;
+    for(var r=0;r<rn;r++){rv[r*6+1]-=.13;rv[r*6+4]-=.13;if(rv[r*6+4]<-3){var ny=13+Math.random()*3;rv[r*6+1]=ny;rv[r*6+4]=ny-.18;}}
+    rgeo.attributes.position.needsUpdate=true;
+    var pp=pgeo.attributes.position.array;
+    for(var q=0;q<pn;q++){pp[q*3+1]-=psp[q];if(pp[q*3+1]<-3)pp[q*3+1]=8;}
+    pgeo.attributes.position.needsUpdate=true;
+    shapes.forEach(function(sh){sh.rotation.x+=sh._rx;sh.rotation.y+=sh._ry;sh.position.y=sh._by+Math.sin(t*.8+sh._ph)*sh._amp;});
+    scanLine.position.y=5+Math.sin(t*.4)*4;scanMat.opacity=.15+Math.abs(Math.sin(t*.4))*.4;
+    camera.position.x+=(mouse.x*1.8-camera.position.x)*.04;
+    camera.position.y+=(6.5-mouse.y*.6-camera.position.y)*.04;
+    camera.position.z=11+Math.sin(t*.28)*.2;
+    camera.lookAt(0,0,-3);renderer.render(scene,camera);
+  })();
+})();
+
+/* ══════════════════════════════════════
+   TIMELINE CARDS
+══════════════════════════════════════ */
+(function(){
+  var cardList=document.getElementById('cardList');
+  DAYS.forEach(function(day){
+    var card=document.createElement('article');
+    card.className='dcard rev';card.style.setProperty('--cc',day.color);
+    card.innerHTML='<div class="dcnum">0'+day.id+'</div>'+
+      '<div class="dmeta"><p class="dtag" style="color:'+day.color+'">'+day.tag+'</p><span class="dlabel">'+esc(day.label)+'</span><h3>'+esc(day.title)+'</h3></div>'+
+      '<div class="dbody"><p class="narr">'+esc(day.narrative)+'</p>'+
+      '<div class="sgrid">'+day.stops.map(function(s){return'<div class="sbox" style="--bc:'+day.color+'"><div class="sbtop"><span class="sbname">'+esc(s.name)+'</span><span class="sbtime">'+esc(s.time)+'</span></div><p class="sbnote">'+esc(s.note)+'</p></div>';}).join('')+'</div></div>';
+    cardList.appendChild(card);
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(entries,obs){entries.forEach(function(en){if(en.isIntersecting){en.target.classList.add('in');obs.unobserve(en.target);}});},{threshold:.08});
+      io.observe(card);
+    } else {card.classList.add('in');}
+    if(!window.matchMedia('(prefers-reduced-motion:reduce)').matches){
+      card.addEventListener('mousemove',function(e){var r=card.getBoundingClientRect();var px=(e.clientX-r.left)/r.width-.5;var py=(e.clientY-r.top)/r.height-.5;card.style.transition='transform .1s ease,box-shadow .28s,border-color .28s';card.style.transform='perspective(1200px) rotateX('+(py*-5.5)+'deg) rotateY('+(px*6.5)+'deg) translateZ(5px)';});
+      card.addEventListener('mouseleave',function(){card.style.transition='transform .45s cubic-bezier(.16,1,.3,1),box-shadow .28s,border-color .28s';card.style.transform='perspective(1200px) rotateX(0) rotateY(0) translateZ(0)';});
+    }
+  });
+})();
+
+/* ══════════════════════════════════════
+   TEXT SCRAMBLE
+══════════════════════════════════════ */
+(function(){
+  if(window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  var CH='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#%&';
+  document.querySelectorAll('.eyebrow').forEach(function(el){
+    var io=new IntersectionObserver(function(entries,obs){
+      entries.forEach(function(en){
+        if(en.isIntersecting){
+          var txt=el.textContent.trim();var f=0,tot=txt.length*3;
+          var iv=setInterval(function(){el.textContent=txt.split('').map(function(c,i){if(' ·-'.indexOf(c)>-1)return c;if(f/tot>i/txt.length)return c;return CH[Math.floor(Math.random()*CH.length)];}).join('');f++;if(f>=tot){el.textContent=txt;clearInterval(iv);}},35);
+          obs.unobserve(en.target);
+        }
+      });
+    },{threshold:.9});
+    io.observe(el);
+  });
+})();
+
+/* ══════════════════════════════════════
+   LIGHTBOX
+══════════════════════════════════════ */
+var lbEl=document.getElementById('lightbox');
+var lbImg=document.getElementById('lb-img');
+document.getElementById('lightbox').addEventListener('click',function(e){if(e.target===lbEl||e.target===document.querySelector('.lb-close')){lbEl.classList.remove('open');}});
+function openLightbox(src){lbImg.src=src;lbEl.classList.add('open');}
+
+/* ══════════════════════════════════════
+   LEAFLET MAP
+══════════════════════════════════════ */
+var lmap, markerGroup, currentRoute=null;
+
+function initMap(){
+  lmap=L.map('map',{scrollWheelZoom:false,zoomControl:true,attributionControl:false,tap:true}).setView([15.97,73.62],10);
+
+  /* Dark CartoDB tiles */
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',{
+    subdomains:'abcd',maxZoom:19
+  }).addTo(lmap);
+
+  markerGroup=L.layerGroup().addTo(lmap);
+
+  /* Fix size after render */
+  setTimeout(function(){lmap.invalidateSize();},300);
+  if('IntersectionObserver' in window){
+    var mo=new IntersectionObserver(function(entries){entries.forEach(function(en){if(en.isIntersecting){lmap.invalidateSize();mo.disconnect();}});},{threshold:.1});
+    mo.observe(document.getElementById('map'));
+  }
+
+  buildDayUI();
+  renderDay(DAYS[0]);
+}
+
+/* Build day tab buttons + progress segments */
+function buildDayUI(){
+  var tabsEl=document.getElementById('dayTabs');
+  DAYS.forEach(function(day,i){
+    var btn=document.createElement('button');
+    btn.className='dtab'+(i===0?' active':'');btn.type='button';
+    btn.style.setProperty('--tc',day.color);
+    btn.innerHTML='<span class="tdot"></span>'+day.tag+' — '+day.label;
+    btn.addEventListener('click',function(){
+      document.querySelectorAll('.dtab').forEach(function(t){t.classList.remove('active');});
+      btn.classList.add('active');renderDay(day);
+    });
+    tabsEl.appendChild(btn);
+  });
+  var progEl=document.getElementById('dayProg');
+  DAYS.forEach(function(){var seg=document.createElement('div');seg.className='dpseg';progEl.appendChild(seg);});
+}
+
+/* Draw the OSRM road route between stops */
+async function drawRoute(stops,color){
+  if(currentRoute){markerGroup.removeLayer(currentRoute);currentRoute=null;}
+  var coords=stops.map(function(s){return s.lng+','+s.lat;}).join(';');
+  try{
+    var resp=await fetch('https://router.project-osrm.org/route/v1/driving/'+coords+'?overview=full&geometries=geojson',{signal:AbortSignal.timeout(6000)});
+    var data=await resp.json();
+    if(data.code==='Ok'&&data.routes&&data.routes[0]){
+      var latlngs=data.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]];});
+      currentRoute=L.polyline(latlngs,{color:color,weight:4,opacity:.9,lineCap:'round',lineJoin:'round'}).addTo(markerGroup);
+      return;
+    }
+  }catch(e){}
+  /* Fallback: straight line if OSRM fails */
+  currentRoute=L.polyline(stops.map(function(s){return[s.lat,s.lng];}),{color:color,weight:3,opacity:.75,dashArray:'8,6'}).addTo(markerGroup);
+}
+
+/* Render a full day */
+function renderDay(day){
+  markerGroup.clearLayers();currentRoute=null;
+
+  /* progress segments */
+  document.querySelectorAll('.dpseg').forEach(function(seg,i){
+    seg.classList.toggle('on',i<day.id);
+    seg.style.background=i<day.id?day.color:'';
+    seg.style.boxShadow=i<day.id?'0 0 8px '+day.glow:'';
+  });
+
+  /* Route (async) */
+  drawRoute(day.stops,day.color).then(function(){
+    var bounds=L.latLngBounds(day.stops.map(function(s){return[s.lat,s.lng];}));
+    lmap.fitBounds(bounds,{padding:[44,44],maxZoom:13});
+  });
+
+  /* Markers with stagger */
+  day.stops.forEach(function(s,idx){
+    setTimeout(function(){
+      var icon=L.divIcon({className:'',html:'<div class="mpin" style="--pc:'+day.color+';--pg:'+day.glow+'">'+(idx+1)+'</div>',iconSize:[30,30],iconAnchor:[15,15]});
+      var m=L.marker([s.lat,s.lng],{icon:icon}).addTo(markerGroup);
+      m.bindPopup('<span class="pc" style="color:'+day.color+'">'+esc(s.time)+'</span><b style="display:block;font-size:13px;margin-bottom:4px;color:'+day.color+'">'+esc(s.name)+'</b><span style="font-size:12px;color:var(--tdim)">'+esc(s.note)+'</span>',{maxWidth:260});
+      m.on('click',function(){selectStop(s,day,idx);});
+    },idx*200);
+  });
+
+  updateInfoPanel(day,-1);
+}
+
+/* Tap a stop: update panel + fetch photos */
+function selectStop(stop,day,idx){
+  lmap.setView([stop.lat,stop.lng],13,{animate:true,duration:.6});
+  document.querySelectorAll('.sitem').forEach(function(el,i){el.classList.toggle('sel',i===idx);});
+  updateInfoPanel(day,idx);
+  fetchWikiPhotos(stop.name);
+  if(window.innerWidth<900){
+    setTimeout(function(){document.getElementById('mapInfo').scrollIntoView({behavior:'smooth',block:'start'});},150);
+  }
+}
+
+/* Update the right-side info panel */
+function updateInfoPanel(day,activeIdx){
+  var info=document.getElementById('mapInfo');
+  info.style.opacity='0';info.style.transform='translateY(6px)';
+  setTimeout(function(){
+    info.innerHTML=
+      '<p class="mi-tag" style="color:'+day.color+'">'+day.tag+' · '+esc(day.label)+'</p>'+
+      '<h3 class="mi-title">'+esc(day.title)+'</h3>'+
+      '<p class="mi-narr">'+esc(day.narrative)+'</p>'+
+      '<div class="photo-strip" id="photo-strip">'+(activeIdx>=0?'<div class="photo-loading">fetching photos</div>':'')+'</div>'+
+      '<ul class="slist">'+
+        day.stops.map(function(s,i){
+          return'<li class="sitem'+(i===activeIdx?' sel':'')+'" style="--sc:'+day.color+'">'+
+            '<div class="srow"><span class="sname">'+esc(s.name)+'</span><span class="stime">'+esc(s.time)+'</span></div>'+
+            '<p class="snote">'+esc(s.note)+'</p>'+
+            '<div class="scoord">'+s.lat.toFixed(4)+', '+s.lng.toFixed(4)+'</div>'+
+          '</li>';
+        }).join('')+
+      '</ul>';
+    info.querySelectorAll('.sitem').forEach(function(el,i){
+      el.addEventListener('click',function(){selectStop(day.stops[i],day,i);});
+    });
+    info.style.transition='opacity .3s ease,transform .3s ease';
+    info.style.opacity='1';info.style.transform='translateY(0)';
+  },70);
+}
+
+/* Wikipedia + Wikimedia Commons photo fetch (no API key needed) */
+async function fetchWikiPhotos(stopName){
+  var strip=document.getElementById('photo-strip');
+  if(!strip) return;
+  strip.innerHTML='<div class="photo-loading">fetching photos</div>';
+  strip.classList.remove('has-photos');
+
+  var query=stopName+' Konkan Maharashtra India';
+  try{
+    /* 1. Wikipedia search — get page thumbnails */
+    var url='https://en.wikipedia.org/w/api.php?action=query&generator=search'
+      +'&gsrsearch='+encodeURIComponent(query)
+      +'&gsrnamespace=0&gsrlimit=8&prop=pageimages&piprop=thumbnail&pithumbsize=600&format=json&origin=*';
+    var resp=await fetch(url);
+    var data=await resp.json();
+    var imgs=[];
+    if(data.query&&data.query.pages){
+      imgs=Object.values(data.query.pages).filter(function(p){return p.thumbnail;}).map(function(p){return p.thumbnail.source;});
+    }
+
+    /* 2. If < 3 results, try Wikimedia Commons */
+    if(imgs.length<3){
+      var commUrl='https://commons.wikimedia.org/w/api.php?action=query&list=search'
+        +'&srsearch='+encodeURIComponent(stopName+' Konkan')
+        +'&srnamespace=6&srlimit=8&prop=imageinfo&iiprop=url&iiurlwidth=500&format=json&origin=*';
+      var cResp=await fetch(commUrl);
+      var cData=await cResp.json();
+      if(cData.query&&cData.query.search){
+        var titles=cData.query.search.map(function(r){return r.title;}).join('|');
+        if(titles){
+          var infoUrl='https://commons.wikimedia.org/w/api.php?action=query&titles='
+            +encodeURIComponent(titles)+'&prop=imageinfo&iiprop=url&iiurlwidth=500&format=json&origin=*';
+          var iResp=await fetch(infoUrl);
+          var iData=await iResp.json();
+          if(iData.query&&iData.query.pages){
+            Object.values(iData.query.pages).forEach(function(pg){
+              if(pg.imageinfo&&pg.imageinfo[0]&&pg.imageinfo[0].thumburl){
+                imgs.push(pg.imageinfo[0].thumburl);
+              }
+            });
+          }
+        }
+      }
+    }
+
+    strip=document.getElementById('photo-strip');
+    if(!strip) return;
+    if(!imgs.length){strip.innerHTML='';return;}
+
+    strip.innerHTML=imgs.slice(0,6).map(function(src){
+      return'<img src="'+src+'" alt="'+esc(stopName)+'" loading="lazy">';
+    }).join('');
+    strip.classList.add('has-photos');
+    strip.querySelectorAll('img').forEach(function(img){
+      img.addEventListener('click',function(){openLightbox(img.src);});
+      img.addEventListener('error',function(){img.style.display='none';});
+    });
+  }catch(e){
+    var s2=document.getElementById('photo-strip');
+    if(s2) s2.innerHTML='';
+  }
+}
+
+/* Boot the map after Leaflet JS loads */
+initMap();
+</script>
+</body>
+</html>
