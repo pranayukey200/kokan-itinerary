@@ -98,8 +98,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:var(--fb);line-
 .dpseg.on{background:var(--green);}
 
 .maplayout{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start;}
-#map{height:520px;border-radius:12px;border:1px solid var(--bs);background:var(--bg);position:relative;z-index:1;clip-path:inset(0 round 12px);}
-#map .leaflet-tile-pane{filter:invert(100%) hue-rotate(180deg) brightness(0.82) saturate(0.75) contrast(1.05);}
+#map{height:520px;border-radius:12px;border:1px solid var(--bs);background:#0a1a1c;position:relative;}
 
 /* Leaflet overrides */
 .leaflet-popup-content-wrapper{background:var(--surf2)!important;color:var(--text)!important;border:1px solid var(--bs)!important;border-radius:10px!important;box-shadow:0 4px 28px rgba(0,0,0,.7)!important;}
@@ -481,13 +480,13 @@ function openLightbox(src){lbImg.src=src;lbEl.classList.add('open');}
 /* ══════════════════════════════════════
    LEAFLET MAP
 ══════════════════════════════════════ */
-var lmap, markerGroup, currentRoute=null;
+var lmap, markerGroup, currentRoute=null, _tileLayer;
 
 function initMap(){
   lmap=L.map('map',{scrollWheelZoom:false,zoomControl:true,attributionControl:false});
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    subdomains:'abc',maxZoom:19
+  _tileLayer=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',{
+    subdomains:'abcd',maxZoom:19
   }).addTo(lmap);
 
   markerGroup=L.layerGroup().addTo(lmap);
@@ -496,11 +495,12 @@ function initMap(){
   buildDayUI();
   renderDay(DAYS[0]);
 
-  /* After next paint: fix size + reset all tile positions */
-  requestAnimationFrame(function(){
-    lmap.invalidateSize({animate:false,pan:false});
-    lmap.setView([15.97,73.62],10,{animate:false,reset:true});
-  });
+  /* Trigger Leaflet's own resize handler — more reliable than invalidateSize */
+  window.dispatchEvent(new Event('resize'));
+  setTimeout(function(){
+    window.dispatchEvent(new Event('resize'));
+    _tileLayer.redraw();
+  },400);
 }
 
 /* Build day tab buttons + progress segments */
@@ -669,13 +669,12 @@ async function fetchWikiPhotos(stopName){
   }
 }
 
-/* Boot the map lazily — wait until #map is visible so Leaflet measures correct size */
+/* Boot the map lazily — wait until #map is visible */
 var mapBooted=false;
 function bootMap(){
   if(mapBooted) return;
   mapBooted=true;
-  /* 500ms delay: lets CSS grid finish computing column widths before Leaflet measures */
-  setTimeout(initMap,500);
+  setTimeout(initMap,800);
 }
 if('IntersectionObserver' in window){
   var mapIO=new IntersectionObserver(function(entries){
