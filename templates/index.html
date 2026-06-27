@@ -98,7 +98,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:var(--fb);line-
 .dpseg.on{background:var(--green);}
 
 .maplayout{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start;}
-#map{height:520px;border-radius:12px;border:1px solid var(--bs);background:#0a1a1c;position:relative;}
+#map{height:520px;border-radius:12px;border:1px solid var(--bs);background:#0a1a1c;position:relative;overflow:hidden;z-index:1;}
 
 /* Leaflet overrides */
 .leaflet-popup-content-wrapper{background:var(--surf2)!important;color:var(--text)!important;border:1px solid var(--bs)!important;border-radius:10px!important;box-shadow:0 4px 28px rgba(0,0,0,.7)!important;}
@@ -480,27 +480,27 @@ function openLightbox(src){lbImg.src=src;lbEl.classList.add('open');}
 /* ══════════════════════════════════════
    LEAFLET MAP
 ══════════════════════════════════════ */
-var lmap, markerGroup, currentRoute=null, _tileLayer;
+var lmap, markerGroup, currentRoute=null;
 
 function initMap(){
-  lmap=L.map('map',{scrollWheelZoom:false,zoomControl:true,attributionControl:false});
+  /* Standard Leaflet init: setView first, then invalidateSize after tiles added */
+  lmap=L.map('map',{scrollWheelZoom:false,zoomControl:true,attributionControl:false})
+       .setView([15.97,73.62],10);
 
-  _tileLayer=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',{
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',{
     subdomains:'abcd',maxZoom:19
   }).addTo(lmap);
 
   markerGroup=L.layerGroup().addTo(lmap);
-  lmap.setView([15.97,73.62],10);
+
+  /* invalidateSize AFTER tiles added so Leaflet remeasures with correct container */
+  lmap.invalidateSize();
 
   buildDayUI();
   renderDay(DAYS[0]);
 
-  /* Trigger Leaflet's own resize handler — more reliable than invalidateSize */
-  window.dispatchEvent(new Event('resize'));
-  setTimeout(function(){
-    window.dispatchEvent(new Event('resize'));
-    _tileLayer.redraw();
-  },400);
+  /* One deferred pass to catch any late reflow */
+  setTimeout(function(){lmap.invalidateSize();},300);
 }
 
 /* Build day tab buttons + progress segments */
@@ -669,21 +669,10 @@ async function fetchWikiPhotos(stopName){
   }
 }
 
-/* Boot the map lazily — wait until #map is visible */
-var mapBooted=false;
-function bootMap(){
-  if(mapBooted) return;
-  mapBooted=true;
-  setTimeout(initMap,800);
-}
-if('IntersectionObserver' in window){
-  var mapIO=new IntersectionObserver(function(entries){
-    entries.forEach(function(en){if(en.isIntersecting){bootMap();mapIO.disconnect();}});
-  },{threshold:0.05});
-  mapIO.observe(document.getElementById('map'));
-} else {
-  window.addEventListener('load',bootMap);
-}
+/* Init map on window load — layout is fully settled by then */
+window.addEventListener('load',function(){
+  setTimeout(initMap,150);
+});
 </script>
 </body>
 </html>
