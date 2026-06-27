@@ -98,7 +98,8 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:var(--fb);line-
 .dpseg.on{background:var(--green);}
 
 .maplayout{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start;}
-#map{height:520px;border-radius:12px;border:1px solid var(--bs);background:var(--bg);overflow:hidden;z-index:0;}
+#map{height:520px;border-radius:12px;border:1px solid var(--bs);background:var(--bg);overflow:hidden;position:relative;z-index:1;}
+.map-tiles{filter:invert(100%) hue-rotate(180deg) brightness(0.82) saturate(0.75) contrast(1.05);}
 
 /* Leaflet overrides */
 .leaflet-popup-content-wrapper{background:var(--surf2)!important;color:var(--text)!important;border:1px solid var(--bs)!important;border-radius:10px!important;box-shadow:0 4px 28px rgba(0,0,0,.7)!important;}
@@ -483,17 +484,19 @@ function openLightbox(src){lbImg.src=src;lbEl.classList.add('open');}
 var lmap, markerGroup, currentRoute=null;
 
 function initMap(){
-  lmap=L.map('map',{scrollWheelZoom:false,zoomControl:true,attributionControl:false,tap:true}).setView([15.97,73.62],10);
+  lmap=L.map('map',{scrollWheelZoom:false,zoomControl:true,attributionControl:false}).setView([15.97,73.62],10);
 
-  /* Dark CartoDB tiles */
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',{
-    subdomains:'abcd',maxZoom:19
+  /* OSM tiles with CSS dark-invert — no CDN key needed, always works */
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    subdomains:'abc',maxZoom:19,className:'map-tiles'
   }).addTo(lmap);
 
   markerGroup=L.layerGroup().addTo(lmap);
 
-  /* Fix size after render */
-  setTimeout(function(){lmap.invalidateSize();},300);
+  /* Fix size after render — multiple passes for CDN latency */
+  setTimeout(function(){lmap.invalidateSize();},100);
+  setTimeout(function(){lmap.invalidateSize();},500);
+  setTimeout(function(){lmap.invalidateSize();},1200);
   if('IntersectionObserver' in window){
     var mo=new IntersectionObserver(function(entries){entries.forEach(function(en){if(en.isIntersecting){lmap.invalidateSize();mo.disconnect();}});},{threshold:.1});
     mo.observe(document.getElementById('map'));
@@ -669,8 +672,9 @@ async function fetchWikiPhotos(stopName){
   }
 }
 
-/* Boot the map after Leaflet JS loads */
-initMap();
+/* Boot the map after everything loads */
+if(document.readyState==='complete'){initMap();}
+else{window.addEventListener('load',initMap);}
 </script>
 </body>
 </html>
